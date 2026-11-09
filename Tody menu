@@ -1,5 +1,5 @@
 --============================================================
--- TODY MENU - TAB SYSTEM (Feito por Night)
+-- TODY MENU - Versão Blindada com Efeito de Abertura
 -- LocalScript em StarterPlayerScripts
 --============================================================
 
@@ -12,157 +12,156 @@ local LocalPlayer = Players.LocalPlayer
 
 local espAtivo = false
 local aimbotAtivo = false
+local mostrarNome = true
+local tamanhoMira = 40
 local highlights = {}
 
 --==================== FUNÇÕES DO JOGO ====================
 local function getAlvos()
-    local lista = {}
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            table.insert(lista, p.Character)
-        end
-    end
-    for _, obj in pairs(workspace:GetChildren()) do
-        if obj:FindFirstChild("Humanoid") and obj:FindFirstChild("Head") and obj ~= LocalPlayer.Character then
-            if not Players:GetPlayerFromCharacter(obj) then
-                table.insert(lista, obj)
-            end
-        end
-    end
-    return lista
+	local lista = {}
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character then
+			table.insert(lista, p.Character)
+		end
+	end
+	for _, obj in pairs(workspace:GetChildren()) do
+		if obj:FindFirstChild("Humanoid") and obj:FindFirstChild("Head") and obj ~= LocalPlayer.Character then
+			if not Players:GetPlayerFromCharacter(obj) then
+				table.insert(lista, obj)
+			end
+		end
+	end
+	return lista
 end
 
---==================== ESP (SEM A BOLINHA) ====================
+--==================== ESP ====================
 local function getCorTime(char)
-    local playerDesseChar = Players:GetPlayerFromCharacter(char)
-    if not playerDesseChar then return Color3.fromRGB(255, 50, 50) end
-    if LocalPlayer.Team and playerDesseChar.Team and LocalPlayer.Team == playerDesseChar.Team then
-        return Color3.fromRGB(255, 255, 255) -- Time: Branco
-    end
-    return Color3.fromRGB(255, 50, 50) -- Inimigo: Vermelho
+	local playerDesseChar = Players:GetPlayerFromCharacter(char)
+	if not playerDesseChar then return Color3.fromRGB(255, 50, 50) end
+	if LocalPlayer.Team and playerDesseChar.Team and LocalPlayer.Team == playerDesseChar.Team then
+		return Color3.fromRGB(255, 255, 255)
+	end
+	return Color3.fromRGB(255, 50, 50)
 end
 
 local function criarESP(char)
-    if char == LocalPlayer.Character or highlights[char] then return end
-    local head = char:FindFirstChild("Head")
-    if not head then return end
+	if char == LocalPlayer.Character or highlights[char] then return end
+	local head = char:FindFirstChild("Head")
+	if not head then return end
 
-    local corESP = getCorTime(char)
+	local corESP = getCorTime(char)
 
-    -- Destaque no corpo (Highlight)
-    local hl = Instance.new("Highlight")
-    hl.FillColor = corESP
-    hl.OutlineColor = corESP
-    hl.FillTransparency = 0.6
-    hl.OutlineTransparency = 0
-    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    hl.Adornee = char
-    hl.Parent = char
+	local hl = Instance.new("Highlight")
+	hl.FillColor = corESP
+	hl.OutlineColor = corESP
+	hl.FillTransparency = 0.6
+	hl.OutlineTransparency = 0
+	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	hl.Adornee = char
+	hl.Parent = char
 
-    -- Interface em cima do jogador (Apenas Nome e Distância)
-    local bb = Instance.new("BillboardGui")
-    bb.Size = UDim2.new(0, 150, 0, 40) -- Tamanho ajustado (só texto)
-    bb.StudsOffset = Vector3.new(0, 2.5, 0)
-    bb.AlwaysOnTop = true
-    bb.Adornee = head
-    bb.Parent = head
+	local bb = Instance.new("BillboardGui")
+	bb.Size = UDim2.new(0, 150, 0, 40)
+	bb.StudsOffset = Vector3.new(0, 2.5, 0)
+	bb.AlwaysOnTop = true
+	bb.Adornee = head
+	bb.Parent = head
+	bb.Enabled = mostrarNome
 
-    -- Texto com Nome
-    local nomeLabel = Instance.new("TextLabel")
-    nomeLabel.Size = UDim2.new(1, 0, 0, 20)
-    nomeLabel.Position = UDim2.new(0, 0, 0, 0)
-    nomeLabel.BackgroundTransparency = 1
-    nomeLabel.TextColor3 = corESP 
-    nomeLabel.TextStrokeTransparency = 0
-    nomeLabel.TextScaled = true
-    nomeLabel.Font = Enum.Font.GothamBlack
-    nomeLabel.Text = char.Name
-    nomeLabel.Parent = bb
+	local nomeLabel = Instance.new("TextLabel")
+	nomeLabel.Size = UDim2.new(1, 0, 0, 20)
+	nomeLabel.Position = UDim2.new(0, 0, 0, 0)
+	nomeLabel.BackgroundTransparency = 1
+	nomeLabel.TextColor3 = corESP 
+	nomeLabel.TextStrokeTransparency = 0
+	nomeLabel.TextScaled = true
+	nomeLabel.Font = Enum.Font.GothamBlack
+	nomeLabel.Text = char.Name
+	nomeLabel.Parent = bb
 
-    -- Texto com Distância
-    local distLabel = Instance.new("TextLabel")
-    distLabel.Size = UDim2.new(1, 0, 0, 15)
-    distLabel.Position = UDim2.new(0, 0, 0, 20)
-    distLabel.BackgroundTransparency = 1
-    distLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    distLabel.TextStrokeTransparency = 0
-    distLabel.TextScaled = true
-    distLabel.Font = Enum.Font.GothamMedium
-    distLabel.Text = "[0m]"
-    distLabel.Parent = bb
+	local distLabel = Instance.new("TextLabel")
+	distLabel.Size = UDim2.new(1, 0, 0, 15)
+	distLabel.Position = UDim2.new(0, 0, 0, 20)
+	distLabel.BackgroundTransparency = 1
+	distLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+	distLabel.TextStrokeTransparency = 0
+	distLabel.TextScaled = true
+	distLabel.Font = Enum.Font.GothamMedium
+	distLabel.Text = "[0m]"
+	distLabel.Parent = bb
 
-    highlights[char] = { hl = hl, bb = bb, nomeLabel = nomeLabel, distLabel = distLabel }
+	highlights[char] = { hl = hl, bb = bb, nomeLabel = nomeLabel, distLabel = distLabel }
 end
 
 local function limparESP()
-    for char, d in pairs(highlights) do
-        if d.hl then d.hl:Destroy() end
-        if d.bb then d.bb:Destroy() end
-    end
-    highlights = {}
+	for char, d in pairs(highlights) do
+		if d.hl then d.hl:Destroy() end
+		if d.bb then d.bb:Destroy() end
+	end
+	highlights = {}
 end
 
 local function gerenciarESP()
-    if not espAtivo then return end
-    for char, d in pairs(highlights) do
-        if not char or not char.Parent or not char:FindFirstChild("Head") then
-            if d.hl then d.hl:Destroy() end
-            if d.bb then d.bb:Destroy() end
-            highlights[char] = nil
-        end
-    end
-    for _, char in pairs(getAlvos()) do
-        if not highlights[char] then criarESP(char) end
-    end
+	if not espAtivo then return end
+	for char, d in pairs(highlights) do
+		if not char or not char.Parent or not char:FindFirstChild("Head") then
+			if d.hl then d.hl:Destroy() end
+			if d.bb then d.bb:Destroy() end
+			highlights[char] = nil
+		end
+	end
+	for _, char in pairs(getAlvos()) do
+		if not highlights[char] then criarESP(char) end
+	end
 end
 
 local function atualizarESP()
-    for char, d in pairs(highlights) do
-        if char.Parent and d.nomeLabel then
-            local head = char:FindFirstChild("Head")
-            if head then
-                local dist = (head.Position - Camera.CFrame.Position).Magnitude
-                d.distLabel.Text = "[" .. math.floor(dist) .. "m]"
-            end
-        end
-    end
+	for char, d in pairs(highlights) do
+		if char.Parent and d.nomeLabel then
+			local head = char:FindFirstChild("Head")
+			if head then
+				local dist = (head.Position - Camera.CFrame.Position).Magnitude
+				d.distLabel.Text = "[" .. math.floor(dist) .. "m]"
+			end
+		end
+	end
 end
 
 --==================== AIMBOT ====================
 local function acharAlvo()
-    local melhor, melhorScore = nil, math.huge
-    local origem = Camera.CFrame.Position
-    local olhar = Camera.CFrame.LookVector
+	local melhor, melhorScore = nil, math.huge
+	local origem = Camera.CFrame.Position
+	local olhar = Camera.CFrame.LookVector
 
-    for _, char in pairs(getAlvos()) do
-        local head = char:FindFirstChild("Head")
-        if head then
-            local dir = head.Position - origem
-            local dist = dir.Magnitude
-            if dist < 500 then
-                local ang = math.deg(math.acos(math.clamp(olhar.Unit:Dot(dir.Unit), -1, 1)))
-                if ang < 180 then
-                    local score = ang + dist * 0.05
-                    if score < melhorScore then
-                        melhorScore = score
-                        melhor = head.Position
-                    end
-                end
-            end
-        end
-    end
-    return melhor
+	for _, char in pairs(getAlvos()) do
+		local head = char:FindFirstChild("Head")
+		if head then
+			local dir = head.Position - origem
+			local dist = dir.Magnitude
+			if dist < 500 then
+				local ang = math.deg(math.acos(math.clamp(olhar.Unit:Dot(dir.Unit), -1, 1)))
+				if ang < 180 then
+					local score = ang + dist * 0.05
+					if score < melhorScore then
+						melhorScore = score
+						melhor = head.Position
+					end
+				end
+			end
+		end
+	end
+	return melhor
 end
 
 local function atualizarAimbot(dt)
-    if not aimbotAtivo then return end
-    local alvo = acharAlvo()
-    if not alvo then return end
-    local alvoCF = CFrame.lookAt(Camera.CFrame.Position, alvo)
-    Camera.CFrame = Camera.CFrame:Lerp(alvoCF, math.clamp(0.5 * dt * 60, 0, 1))
+	if not aimbotAtivo then return end
+	local alvo = acharAlvo()
+	if not alvo then return end
+	local alvoCF = CFrame.lookAt(Camera.CFrame.Position, alvo)
+	Camera.CFrame = Camera.CFrame:Lerp(alvoCF, math.clamp(0.5 * dt * 60, 0, 1))
 end
 
---==================== SISTEMA DE ABAS (TABS) ====================
+--==================== INTERFACE GRÁFICA ====================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "TodyMenuTabs"
 screenGui.ResetOnSpawn = false
@@ -170,20 +169,20 @@ screenGui.IgnoreGuiInset = true
 screenGui.DisplayOrder = 999
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- MIRA DO AIMBOT
+-- MIRA
 local miraCirculo = Instance.new("Frame")
-miraCirculo.Size = UDim2.new(0, 40, 0, 40)
-miraCirculo.Position = UDim2.new(0.5, -20, 0.5, -20)
+miraCirculo.Size = UDim2.new(0, tamanhoMira, 0, tamanhoMira)
+miraCirculo.Position = UDim2.new(0.5, -tamanhoMira/2, 0.5, -tamanhoMira/2)
 miraCirculo.BackgroundTransparency = 1
 miraCirculo.Visible = false
 miraCirculo.Parent = screenGui
 local miraCorner = Instance.new("UICorner"); miraCorner.CornerRadius = UDim.new(1, 0); miraCorner.Parent = miraCirculo
 local miraStroke = Instance.new("UIStroke"); miraStroke.Color = Color3.fromRGB(50, 220, 120); miraStroke.Thickness = 2; miraStroke.Parent = miraCirculo
 
--- FUNDO PRINCIPAL DO MENU
+-- MENU PRINCIPAL
 local menuPrincipal = Instance.new("Frame")
-menuPrincipal.Size = UDim2.new(0, 420, 0, 220) -- Altura reduzida (tirei o player)
-menuPrincipal.Position = UDim2.new(0.5, -210, 0.5, -110)
+menuPrincipal.Size = UDim2.new(0, 420, 0, 240)
+menuPrincipal.Position = UDim2.new(0.5, -210, 0.5, -120)
 menuPrincipal.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 menuPrincipal.BackgroundTransparency = 0.05
 menuPrincipal.BorderSizePixel = 0
@@ -193,7 +192,6 @@ menuPrincipal.Parent = screenGui
 local cantoMenu = Instance.new("UICorner"); cantoMenu.CornerRadius = UDim.new(0, 12); cantoMenu.Parent = menuPrincipal
 local bordaMenu = Instance.new("UIStroke"); bordaMenu.Color = Color3.fromRGB(150, 100, 255); bordaMenu.Thickness = 2; bordaMenu.Transparency = 0.2; bordaMenu.Parent = menuPrincipal
 
--- BARRA LATERAL ESQUERDA (Categorias)
 local barraEsquerda = Instance.new("Frame")
 barraEsquerda.Size = UDim2.new(0, 120, 1, 0)
 barraEsquerda.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
@@ -213,90 +211,86 @@ titulo.Font = Enum.Font.GothamBlack
 titulo.TextSize = 22
 titulo.Parent = barraEsquerda
 
--- ÁREA DIREITA (Onde ficam as opções de cada aba)
 local areaDireita = Instance.new("Frame")
 areaDireita.Size = UDim2.new(1, -120, 1, 0)
 areaDireita.Position = UDim2.new(0, 120, 0, 0)
 areaDireita.BackgroundTransparency = 1
 areaDireita.Parent = menuPrincipal
 
--- Criando as Abas (Páginas)
 local paginas = {}
 local function criarPagina(nome)
-    local page = Instance.new("Frame")
-    page.Size = UDim2.new(1, -20, 1, -20)
-    page.Position = UDim2.new(0, 10, 0, 10)
-    page.BackgroundTransparency = 1
-    page.Visible = false
-    page.Parent = areaDireita
-    paginas[nome] = page
-    return page
+	local page = Instance.new("Frame")
+	page.Size = UDim2.new(1, -20, 1, -20)
+	page.Position = UDim2.new(0, 10, 0, 10)
+	page.BackgroundTransparency = 1
+	page.Visible = false
+	page.Parent = areaDireita
+	paginas[nome] = page
+	return page
 end
 
--- BOTÃO DE CATEGORIA NA ESQUERDA
 local botoesAba = {}
 local function criarAba(texto, yPos, nomePagina)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -20, 0, 35)
-    btn.Position = UDim2.new(0, 10, 0, yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-    btn.TextColor3 = Color3.fromRGB(150, 150, 170)
-    btn.Font = Enum.Font.GothamMedium
-    btn.TextSize = 13
-    btn.Text = texto
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.AutoButtonColor = false
-    btn.Parent = barraEsquerda
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -20, 0, 35)
+	btn.Position = UDim2.new(0, 10, 0, yPos)
+	btn.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+	btn.TextColor3 = Color3.fromRGB(150, 150, 170)
+	btn.Font = Enum.Font.GothamMedium
+	btn.TextSize = 13
+	btn.Text = texto
+	btn.TextXAlignment = Enum.TextXAlignment.Left
+	btn.AutoButtonColor = false
+	btn.Parent = barraEsquerda
 
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = btn
-    botoesAba[nomePagina] = btn
+	local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 6); c.Parent = btn
+	botoesAba[nomePagina] = btn
 
-    btn.MouseButton1Click:Connect(function()
-        for pNome, pFrame in pairs(paginas) do
-            pFrame.Visible = false
-            botoesAba[pNome].BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-            botoesAba[pNome].TextColor3 = Color3.fromRGB(150, 150, 170)
-        end
-        paginas[nomePagina].Visible = true
-        btn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    end)
+	btn.MouseButton1Click:Connect(function()
+		for pNome, pFrame in pairs(paginas) do
+			pFrame.Visible = false
+			botoesAba[pNome].BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+			botoesAba[pNome].TextColor3 = Color3.fromRGB(150, 150, 170)
+		end
+		paginas[nomePagina].Visible = true
+		btn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	end)
 end
 
--- Função auxiliar para criar botões de toggle
 local function criarBotaoToggle(pagina, texto, yPos, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.Position = UDim2.new(0, 0, 0, yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    btn.TextColor3 = Color3.fromRGB(200, 200, 220)
-    btn.Font = Enum.Font.GothamMedium
-    btn.TextSize = 14
-    btn.Text = texto
-    btn.AutoButtonColor = false
-    btn.Parent = pagina
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, 0, 0, 40)
+	btn.Position = UDim2.new(0, 0, 0, yPos)
+	btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+	btn.TextColor3 = Color3.fromRGB(200, 200, 220)
+	btn.Font = Enum.Font.GothamMedium
+	btn.TextSize = 14
+	btn.Text = texto
+	btn.AutoButtonColor = false
+	btn.Parent = pagina
 
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = btn
-    local stroke = Instance.new("UIStroke"); stroke.Color = Color3.fromRGB(60, 60, 80); stroke.Thickness = 1; stroke.Parent = btn
+	local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 8); c.Parent = btn
+	local stroke = Instance.new("UIStroke"); stroke.Color = Color3.fromRGB(60, 60, 80); stroke.Thickness = 1; stroke.Parent = btn
 
-    btn.MouseEnter:Connect(function() TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(45, 45, 60)}):Play() end)
-    btn.MouseLeave:Connect(function() if not btn:GetAttribute("Ativo") then TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play() end end)
-    btn.MouseButton1Click:Connect(function() callback(btn, stroke) end)
-    return btn
+	btn.MouseEnter:Connect(function() TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(45, 45, 60)}):Play() end)
+	btn.MouseLeave:Connect(function() if not btn:GetAttribute("Ativo") then TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play() end end)
+	btn.MouseButton1Click:Connect(function() callback(btn, stroke) end)
+	return btn
 end
 
--- ==================== CONSTRUINDO AS PÁGINAS ====================
+-- ==================== PÁGINAS ====================
 criarPagina("Inicio")
 criarPagina("ESP")
 criarPagina("Aimbot")
-criarPagina("Creditos") -- Nova aba no lugar do Player
+criarPagina("Creditos")
 
 criarAba("🏠 Início", 60, "Inicio")
 criarAba("👁️ ESP", 100, "ESP")
 criarAba("🎯 Aimbot", 140, "Aimbot")
-criarAba("🌙 Créditos", 180, "Creditos") -- Nome da aba
+criarAba("🌙 Créditos", 180, "Creditos")
 
--- CONTEÚDO DA PÁGINA INICIAL
+-- PÁGINA INICIAL
 local textoInicio = Instance.new("TextLabel")
 textoInicio.Size = UDim2.new(1, 0, 1, 0)
 textoInicio.BackgroundTransparency = 1
@@ -307,55 +301,118 @@ textoInicio.TextSize = 14
 textoInicio.TextWrapped = true
 textoInicio.Parent = paginas["Inicio"]
 
--- CONTEÚDO DA PÁGINA ESP
+-- PÁGINA ESP
 criarBotaoToggle(paginas["ESP"], "Ativar ESP", 0, function(btn, stroke)
-    espAtivo = not espAtivo
-    if espAtivo then
-        btn:SetAttribute("Ativo", true)
-        btn.BackgroundColor3 = Color3.fromRGB(40, 150, 90); stroke.Color = Color3.fromRGB(50, 220, 120)
-        btn.Text = "ESP: ON"
-        gerenciarESP()
-    else
-        btn:SetAttribute("Ativo", false)
-        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40); stroke.Color = Color3.fromRGB(60, 60, 80)
-        btn.Text = "Ativar ESP"
-        limparESP()
-    end
+	espAtivo = not espAtivo
+	if espAtivo then
+		btn:SetAttribute("Ativo", true)
+		btn.BackgroundColor3 = Color3.fromRGB(40, 150, 90); stroke.Color = Color3.fromRGB(50, 220, 120)
+		btn.Text = "ESP: ON"
+		gerenciarESP()
+	else
+		btn:SetAttribute("Ativo", false)
+		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40); stroke.Color = Color3.fromRGB(60, 60, 80)
+		btn.Text = "Ativar ESP"
+		limparESP()
+	end
 end)
 
--- CONTEÚDO DA PÁGINA AIMBOT
+criarBotaoToggle(paginas["ESP"], "Mostrar Nome: ON", 50, function(btn, stroke)
+	mostrarNome = not mostrarNome
+	if mostrarNome then
+		btn:SetAttribute("Ativo", true)
+		btn.BackgroundColor3 = Color3.fromRGB(40, 150, 90); stroke.Color = Color3.fromRGB(50, 220, 120)
+		btn.Text = "Mostrar Nome: ON"
+	else
+		btn:SetAttribute("Ativo", false)
+		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40); stroke.Color = Color3.fromRGB(60, 60, 80)
+		btn.Text = "Mostrar Nome: OFF"
+	end
+	for _, d in pairs(highlights) do
+		if d.bb then d.bb.Enabled = mostrarNome end
+	end
+end)
+
+-- PÁGINA AIMBOT
 criarBotaoToggle(paginas["Aimbot"], "Ativar Aimbot Automático", 0, function(btn, stroke)
-    aimbotAtivo = not aimbotAtivo
-    if aimbotAtivo then
-        btn:SetAttribute("Ativo", true)
-        btn.BackgroundColor3 = Color3.fromRGB(40, 150, 90); stroke.Color = Color3.fromRGB(50, 220, 120)
-        btn.Text = "Aimbot: ON"
-        miraCirculo.Visible = true
-    else
-        btn:SetAttribute("Ativo", false)
-        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40); stroke.Color = Color3.fromRGB(60, 60, 80)
-        btn.Text = "Ativar Aimbot Automático"
-        miraCirculo.Visible = false
-    end
+	aimbotAtivo = not aimbotAtivo
+	if aimbotAtivo then
+		btn:SetAttribute("Ativo", true)
+		btn.BackgroundColor3 = Color3.fromRGB(40, 150, 90); stroke.Color = Color3.fromRGB(50, 220, 120)
+		btn.Text = "Aimbot: ON"
+		miraCirculo.Visible = true
+	else
+		btn:SetAttribute("Ativo", false)
+		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40); stroke.Color = Color3.fromRGB(60, 60, 80)
+		btn.Text = "Ativar Aimbot Automático"
+		miraCirculo.Visible = false
+	end
 end)
 
--- CONTEÚDO DA PÁGINA CRÉDITOS (Feito por Night)
+local txtTamanho = Instance.new("TextLabel")
+txtTamanho.Size = UDim2.new(0.5, 0, 0, 40)
+txtTamanho.Position = UDim2.new(0, 0, 0, 50)
+txtTamanho.BackgroundTransparency = 1
+txtTamanho.Text = "Mira: " .. tamanhoMira
+txtTamanho.TextColor3 = Color3.fromRGB(200, 200, 220)
+txtTamanho.Font = Enum.Font.GothamMedium
+txtTamanho.TextSize = 14
+txtTamanho.TextXAlignment = Enum.TextXAlignment.Left
+txtTamanho.Parent = paginas["Aimbot"]
+
+local btnMiraMais = Instance.new("TextButton")
+btnMiraMais.Size = UDim2.new(0.2, 0, 0, 30)
+btnMiraMais.Position = UDim2.new(0.6, 0, 0, 55)
+btnMiraMais.BackgroundColor3 = Color3.fromRGB(50, 220, 120)
+btnMiraMais.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnMiraMais.Font = Enum.Font.GothamBold
+btnMiraMais.TextSize = 20
+btnMiraMais.Text = "+"
+btnMiraMais.Parent = paginas["Aimbot"]
+local cMais = Instance.new("UICorner"); cMais.CornerRadius = UDim.new(0, 6); cMais.Parent = btnMiraMais
+
+local btnMiraMenos = Instance.new("TextButton")
+btnMiraMenos.Size = UDim2.new(0.2, 0, 0, 30)
+btnMiraMenos.Position = UDim2.new(0.8, 0, 0, 55)
+btnMiraMenos.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+btnMiraMenos.TextColor3 = Color3.fromRGB(255, 255, 255)
+btnMiraMenos.Font = Enum.Font.GothamBold
+btnMiraMenos.TextSize = 20
+btnMiraMenos.Text = "-"
+btnMiraMenos.Parent = paginas["Aimbot"]
+local cMenos = Instance.new("UICorner"); cMenos.CornerRadius = UDim.new(0, 6); cMenos.Parent = btnMiraMenos
+
+btnMiraMais.MouseButton1Click:Connect(function()
+	tamanhoMira = math.min(150, tamanhoMira + 10)
+	txtTamanho.Text = "Mira: " .. tamanhoMira
+	miraCirculo.Size = UDim2.new(0, tamanhoMira, 0, tamanhoMira)
+	miraCirculo.Position = UDim2.new(0.5, -tamanhoMira/2, 0.5, -tamanhoMira/2)
+end)
+
+btnMiraMenos.MouseButton1Click:Connect(function()
+	tamanhoMira = math.max(10, tamanhoMira - 10)
+	txtTamanho.Text = "Mira: " .. tamanhoMira
+	miraCirculo.Size = UDim2.new(0, tamanhoMira, 0, tamanhoMira)
+	miraCirculo.Position = UDim2.new(0.5, -tamanhoMira/2, 0.5, -tamanhoMira/2)
+end)
+
+-- PÁGINA CRÉDITOS
 local textoCreditos = Instance.new("TextLabel")
 textoCreditos.Size = UDim2.new(1, 0, 1, 0)
 textoCreditos.BackgroundTransparency = 1
 textoCreditos.Text = "Menu desenvolvido por:\n\n🌟 Night 🌟\n\nAgradecimentos especiais à comunidade de scripts do Roblox.\n\nDivirta-se!"
-textoCreditos.TextColor3 = Color3.fromRGB(200, 180, 255) -- Cor roxinha
+textoCreditos.TextColor3 = Color3.fromRGB(200, 180, 255)
 textoCreditos.Font = Enum.Font.GothamBold
 textoCreditos.TextSize = 16
 textoCreditos.TextWrapped = true
 textoCreditos.Parent = paginas["Creditos"]
 
--- Inicia mostrando a página inicial
+-- Inicia
 paginas["Inicio"].Visible = true
 botoesAba["Inicio"].BackgroundColor3 = Color3.fromRGB(35, 35, 50)
 botoesAba["Inicio"].TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- BOTÃO "T" NA ESQUERDA
+-- BOTÃO "T"
 local botaoT = Instance.new("TextButton")
 botaoT.Size = UDim2.new(0, 45, 0, 45)
 botaoT.Position = UDim2.new(0, 15, 0.5, -22)
@@ -367,33 +424,50 @@ botaoT.Text = "T"
 botaoT.Parent = screenGui
 local cantoT = Instance.new("UICorner"); cantoT.CornerRadius = UDim.new(1, 0); cantoT.Parent = botaoT
 
+-- ==================== EFEITO DE ABRIR/FECHAR ====================
 local function alternarMenu()
-    if menuPrincipal.Visible == false then
-        menuPrincipal.Visible = true
-        menuPrincipal.Size = UDim2.new(0, 420, 0, 0)
-        TweenService:Create(menuPrincipal, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Size = UDim2.new(0, 420, 0, 220)}):Play()
-    else
-        TweenService:Create(menuPrincipal, TweenInfo.new(0.2), {Size = UDim2.new(0, 420, 0, 0)}):Play()
-        task.wait(0.2)
-        menuPrincipal.Visible = false
-        menuPrincipal.Size = UDim2.new(0, 420, 0, 220)
-    end
+	if menuPrincipal.Visible == false then
+		-- Efeito ao ABRIR
+		menuPrincipal.Visible = true
+		menuPrincipal.Size = UDim2.new(0, 0, 0, 0)
+		
+		TweenService:Create(menuPrincipal, TweenInfo.new(
+			0.4, 
+			Enum.EasingStyle.Back, 
+			Enum.EasingDirection.Out
+		), {
+			Size = UDim2.new(0, 420, 0, 240)
+		}):Play()
+	else
+		-- Efeito ao FECHAR
+		TweenService:Create(menuPrincipal, TweenInfo.new(
+			0.25, 
+			Enum.EasingStyle.Quad, 
+			Enum.EasingDirection.In
+		), {
+			Size = UDim2.new(0, 0, 0, 0)
+		}):Play()
+		
+		task.wait(0.25)
+		menuPrincipal.Visible = false
+		menuPrincipal.Size = UDim2.new(0, 420, 0, 240)
+	end
 end
 
 botaoT.MouseButton1Click:Connect(alternarMenu)
 
 UserInputService.InputBegan:Connect(function(input, processado)
-    if processado then return end
-    if input.KeyCode == Enum.KeyCode.G then
-        alternarMenu()
-    end
+	if processado then return end
+	if input.KeyCode == Enum.KeyCode.G then
+		alternarMenu()
+	end
 end)
 
 --==================== LOOP ====================
 RunService.RenderStepped:Connect(function(dt)
-    if espAtivo then
-        gerenciarESP()
-        atualizarESP()
-    end
-    atualizarAimbot(dt)
+	if espAtivo then
+		gerenciarESP()
+		atualizarESP()
+	end
+	atualizarAimbot(dt)
 end)
