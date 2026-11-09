@@ -1,0 +1,338 @@
+--============================================================
+-- TODY MENU - VERSAO FINAL (ESP Fixo + Time Branco)
+-- LocalScript em StarterPlayerScripts
+--============================================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local espAtivo = false
+local aimbotAtivo = false
+local highlights = {}
+
+--==================== FUNÇÃO PARA ACHAR ALVOS ====================
+local function getAlvos()
+    local lista = {}
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            table.insert(lista, p.Character)
+        end
+    end
+    for _, obj in pairs(workspace:GetChildren()) do
+        if obj:FindFirstChild("Humanoid") and obj:FindFirstChild("Head") and obj ~= LocalPlayer.Character then
+            if not Players:GetPlayerFromCharacter(obj) then
+                table.insert(lista, obj)
+            end
+        end
+    end
+    return lista
+end
+
+--==================== ESP ====================
+local function getCorTime(char)
+    local playerDesseChar = Players:GetPlayerFromCharacter(char)
+    if not playerDesseChar then return Color3.fromRGB(255, 50, 50) end
+    if LocalPlayer.Team and playerDesseChar.Team and LocalPlayer.Team == playerDesseChar.Team then
+        return Color3.fromRGB(255, 255, 255) -- Branco para o time
+    end
+    return Color3.fromRGB(255, 50, 50) -- Vermelho para inimigo
+end
+
+local function atualizarCorESP(char)
+    if not highlights[char] then return end
+    local cor = getCorTime(char)
+    highlights[char].hl.FillColor = cor
+    highlights[char].label.TextColor3 = cor
+end
+
+local function criarESP(char)
+    if char == LocalPlayer.Character or highlights[char] then return end
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+
+    local corESP = getCorTime(char)
+
+    local hl = Instance.new("Highlight")
+    hl.FillColor = corESP
+    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+    hl.FillTransparency = 0.5
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Adornee = char
+    hl.Parent = char
+
+    local bb = Instance.new("BillboardGui")
+    bb.Size = UDim2.new(0, 200, 0, 40)
+    bb.StudsOffset = Vector3.new(0, 2.5, 0)
+    bb.AlwaysOnTop = true
+    bb.Adornee = head
+    bb.Parent = head
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = corESP 
+    label.TextStrokeTransparency = 0
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamBold
+    label.Text = char.Name
+    label.Parent = bb
+
+    highlights[char] = { hl = hl, bb = bb, label = label }
+end
+
+local function limparESP()
+    for char, d in pairs(highlights) do
+        if d.hl then d.hl:Destroy() end
+        if d.bb then d.bb:Destroy() end
+    end
+    highlights = {}
+end
+
+-- ESSA FUNÇÃO É A CHAVE PARA O ESP NÃO SUMIR
+local function gerenciarESP()
+    if not espAtivo then return end
+    
+    -- Limpa ESPs de jogadores que morreram ou saíram
+    for char, d in pairs(highlights) do
+        if not char or not char.Parent or not char:FindFirstChild("Head") then
+            if d.hl then d.hl:Destroy() end
+            if d.bb then d.bb:Destroy() end
+            highlights[char] = nil
+        end
+    end
+    
+    -- Tenta criar ESP para todos os alvos atuais
+    for _, char in pairs(getAlvos()) do
+        if not highlights[char] then
+            criarESP(char)
+        end
+    end
+end
+
+local function atualizarESP()
+    for char, d in pairs(highlights) do
+        if char.Parent and d.label then
+            local head = char:FindFirstChild("Head")
+            if head then
+                local dist = (head.Position - Camera.CFrame.Position).Magnitude
+                d.label.Text = char.Name .. " [" .. math.floor(dist) .. "m]"
+            end
+        end
+    end
+end
+
+--==================== AIMBOT ====================
+local function acharAlvo()
+    local melhor, melhorScore = nil, math.huge
+    local origem = Camera.CFrame.Position
+    local olhar = Camera.CFrame.LookVector
+
+    for _, char in pairs(getAlvos()) do
+        local head = char:FindFirstChild("Head")
+        if head then
+            local dir = head.Position - origem
+            local dist = dir.Magnitude
+            if dist < 500 then
+                local ang = math.deg(math.acos(math.clamp(olhar.Unit:Dot(dir.Unit), -1, 1)))
+                if ang < 180 then
+                    local score = ang + dist * 0.05
+                    if score < melhorScore then
+                        melhorScore = score
+                        melhor = head.Position
+                    end
+                end
+            end
+        end
+    end
+    return melhor
+end
+
+local function atualizarAimbot(dt)
+    if not aimbotAtivo then return end
+    local alvo = acharAlvo()
+    if not alvo then return end
+    local alvoCF = CFrame.lookAt(Camera.CFrame.Position, alvo)
+    Camera.CFrame = Camera.CFrame:Lerp(alvoCF, math.clamp(0.5 * dt * 60, 0, 1))
+end
+
+--==================== INTERFACE ====================
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MenuModerno"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.DisplayOrder = 999
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local miraCirculo = Instance.new("Frame")
+miraCirculo.Size = UDim2.new(0, 40, 0, 40)
+miraCirculo.Position = UDim2.new(0.5, -20, 0.5, -20)
+miraCirculo.BackgroundTransparency = 1
+miraCirculo.Visible = false
+miraCirculo.Parent = screenGui
+
+local miraCorner = Instance.new("UICorner")
+miraCorner.CornerRadius = UDim.new(1, 0)
+miraCorner.Parent = miraCirculo
+
+local miraStroke = Instance.new("UIStroke")
+miraStroke.Color = Color3.fromRGB(50, 220, 120)
+miraStroke.Thickness = 2
+miraStroke.Parent = miraCirculo
+
+local fundo = Instance.new("Frame")
+fundo.Size = UDim2.new(0, 280, 0, 240)
+fundo.Position = UDim2.new(0.5, -140, 0.5, -120)
+fundo.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+fundo.BackgroundTransparency = 0.05
+fundo.BorderSizePixel = 0
+fundo.Visible = false
+fundo.Parent = screenGui
+
+local canto = Instance.new("UICorner")
+canto.CornerRadius = UDim.new(0, 12)
+canto.Parent = fundo
+
+local borda = Instance.new("UIStroke")
+borda.Color = Color3.fromRGB(120, 80, 255)
+borda.Thickness = 2
+borda.Transparency = 0.2
+borda.Parent = fundo
+
+local titulo = Instance.new("TextLabel")
+titulo.Size = UDim2.new(1, -20, 0, 40)
+titulo.Position = UDim2.new(0, 10, 0, 8)
+titulo.BackgroundTransparency = 1
+titulo.Text = "⚡ Tody Menu" 
+titulo.TextColor3 = Color3.fromRGB(200, 180, 255)
+titulo.Font = Enum.Font.GothamBlack
+titulo.TextSize = 20
+titulo.TextXAlignment = Enum.TextXAlignment.Left
+titulo.Parent = fundo
+
+local function criarBotao(texto, yPos, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -24, 0, 40)
+    btn.Position = UDim2.new(0, 12, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
+    btn.TextColor3 = Color3.fromRGB(200, 200, 220)
+    btn.Font = Enum.Font.GothamMedium
+    btn.TextSize = 14
+    btn.Text = texto
+    btn.AutoButtonColor = false
+    btn.Parent = fundo
+
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 8)
+    c.Parent = btn
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(60, 60, 90)
+    stroke.Thickness = 1
+    stroke.Parent = btn
+
+    local dot = Instance.new("Frame")
+    dot.Size = UDim2.new(0, 8, 0, 8)
+    dot.Position = UDim2.new(1, -20, 0.5, -4)
+    dot.BackgroundColor3 = Color3.fromRGB(100, 100, 120)
+    dot.BorderSizePixel = 0
+    dot.Parent = btn
+    local dc = Instance.new("UICorner")
+    dc.CornerRadius = UDim.new(1, 0)
+    dc.Parent = dot
+
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(45, 45, 65)}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.15), {Color = Color3.fromRGB(120, 80, 255)}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(35, 35, 48)}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.15), {Color = Color3.fromRGB(60, 60, 90)}):Play()
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        callback(dot, stroke)
+    end)
+    return btn
+end
+
+criarBotao("ESP (Time Branco)", 75, function(dot, stroke)
+    espAtivo = not espAtivo
+    if espAtivo then
+        dot.BackgroundColor3 = Color3.fromRGB(50, 220, 120)
+        stroke.Color = Color3.fromRGB(50, 220, 120)
+        gerenciarESP() -- Chama a função nova
+    else
+        dot.BackgroundColor3 = Color3.fromRGB(100, 100, 120)
+        stroke.Color = Color3.fromRGB(60, 60, 90)
+        limparESP()
+    end
+end)
+
+criarBotao("Aimbot Automático", 125, function(dot, stroke)
+    aimbotAtivo = not aimbotAtivo
+    if aimbotAtivo then
+        dot.BackgroundColor3 = Color3.fromRGB(50, 220, 120)
+        stroke.Color = Color3.fromRGB(50, 220, 120)
+        miraCirculo.Visible = true
+    else
+        dot.BackgroundColor3 = Color3.fromRGB(100, 100, 120)
+        stroke.Color = Color3.fromRGB(60, 60, 90)
+        miraCirculo.Visible = false
+    end
+end)
+
+criarBotao("✕ Fechar", 175, function()
+    TweenService:Create(fundo, TweenInfo.new(0.2), {Size = UDim2.new(0, 280, 0, 0)}):Play()
+    task.wait(0.2)
+    fundo.Visible = false
+    fundo.Size = UDim2.new(0, 280, 0, 240)
+end)
+
+local botaoT = Instance.new("TextButton")
+botaoT.Size = UDim2.new(0, 45, 0, 45)
+botaoT.Position = UDim2.new(0, 15, 0.5, -22)
+botaoT.BackgroundColor3 = Color3.fromRGB(120, 80, 255)
+botaoT.TextColor3 = Color3.fromRGB(255, 255, 255)
+botaoT.Font = Enum.Font.GothamBlack
+botaoT.TextSize = 24
+botaoT.Text = "T"
+botaoT.Parent = screenGui
+
+local cantoT = Instance.new("UICorner")
+cantoT.CornerRadius = UDim.new(1, 0)
+cantoT.Parent = botaoT
+
+local function alternarMenu()
+    if fundo.Visible == false then
+        fundo.Visible = true
+        fundo.Size = UDim2.new(0, 280, 0, 0)
+        TweenService:Create(fundo, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Size = UDim2.new(0, 280, 0, 240)}):Play()
+    else
+        TweenService:Create(fundo, TweenInfo.new(0.2), {Size = UDim2.new(0, 280, 0, 0)}):Play()
+        task.wait(0.2)
+        fundo.Visible = false
+        fundo.Size = UDim2.new(0, 280, 0, 240)
+    end
+end
+
+botaoT.MouseButton1Click:Connect(alternarMenu)
+
+UserInputService.InputBegan:Connect(function(input, processado)
+    if processado then return end
+    if input.KeyCode == Enum.KeyCode.G then
+        alternarMenu()
+    end
+end)
+
+--==================== LOOP ====================
+RunService.RenderStepped:Connect(function(dt)
+    if espAtivo then
+        gerenciarESP() -- Verifica e recria o ESP se sumir
+        atualizarESP()
+    end
+    atualizarAimbot(dt)
+end)
